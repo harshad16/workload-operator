@@ -142,7 +142,8 @@ def cli(operator_namespace: str, verbose: bool = False):
             )
             continue
 
-        _LOGGER.info(
+        _LOGGER.info("Successfully scheduled job %r", method_result)
+        _LOGGER.debug(
             "Result of the method call for %r with parameters %r is %r",
             method_name,
             method_parameters,
