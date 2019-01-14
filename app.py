@@ -21,11 +21,9 @@ import sys
 import logging
 import json
 import typing
+import time
 
 import click
-from kubernetes import client
-from kubernetes import config
-from openshift.dynamic import DynamicClient
 
 from thoth.common import init_logging
 from thoth.common import OpenShift
@@ -34,19 +32,18 @@ from thoth.common import __version__ as THOTH_COMMON_VERSION
 init_logging()
 
 _LOGGER = logging.getLogger("thoth.workload_operator")
-_OPENSHIFT = OpenShift()
 
 
-def _get_method_and_parameters(event) -> typing.Tuple[str, dict]:
+def _get_method_and_parameters(event) -> typing.Tuple[str, dict, str, dict]:
     """Get method and parameters from event."""
     _LOGGER.debug(
         "Obtaining method and parameters that should be used for handling workload"
     )
 
     configmap_name = event["object"].metadata.name
-    method = event["object"].data.method
+    method_name = event["object"].data.run_method_name
 
-    if not method:
+    if not method_name:
         _LOGGER.error(
             "No method to be called provided workload ConfigMap %r: %r",
             configmap_name,
@@ -54,7 +51,7 @@ def _get_method_and_parameters(event) -> typing.Tuple[str, dict]:
         )
         raise ValueError
 
-    parameters = event["object"].data.parameters
+    parameters = event["object"].data.run_method_parameters
     if not parameters:
         _LOGGER.error(
             "No parameters supplied in workload ConfigMap %r: %r",
@@ -64,24 +61,48 @@ def _get_method_and_parameters(event) -> typing.Tuple[str, dict]:
         raise ValueError
 
     try:
-        parameters = json.loads(event["object"].data.parameters)
+        parameters = json.loads(parameters)
     except Exception as exc:
         _LOGGER.exception(
             "Failed to parse parameters for method call %r in workload ConfigMap %r: %s",
-            method,
+            method_name,
             configmap_name,
             event["object"].data,
             str(exc),
         )
         raise ValueError
 
-    return method, parameters
+    template_method_name = event["object"].data.template_method_name
+    if not template_method_name:
+        _LOGGER.error(
+            "No template method name supplied in workload ConfigMap %r: %r",
+            configmap_name,
+            event["object"].data,
+        )
+        raise ValueError
 
+    template_method_parameters = event["object"].data.template_method_parameters
+    if not template_method_parameters:
+        _LOGGER.error(
+            "No template method parameters supplied in workload ConfigMap %r: %r",
+            configmap_name,
+            event["object"].data,
+        )
+        raise ValueError
 
-def _wait_for_quota():
-    """Wait for quota to have resources available."""
-    # TODO: implement
-    pass
+    try:
+        template_method_parameters = json.loads(template_method_parameters)
+    except Exception as exc:
+        _LOGGER.exception(
+            "Failed to parse template parameters for method call %r in workload ConfigMap %r: %s",
+            template_method_name,
+            configmap_name,
+            event["object"].data,
+            str(exc),
+        )
+        raise ValueError
+
+    return method_name, parameters, template_method_name, template_method_parameters
 
 
 @click.command()
@@ -93,6 +114,14 @@ def _wait_for_quota():
     help="Be verbose about what is going on.",
 )
 @click.option(
+    "--sleep-time",
+    "-s",
+    type=float,
+    envvar="THOTH_OPERATOR_SLEEP_TIME",
+    help="Sleep for the given time if resources are not available.",
+    default=5.0,
+)
+@click.option(
     "--operator-namespace",
     "-n",
     type=str,
@@ -100,44 +129,51 @@ def _wait_for_quota():
     envvar="THOTH_OPERATOR_NAMESPACE",
     help="Namespace to connect to to wait for events.",
 )
-def cli(operator_namespace: str, verbose: bool = False):
+def cli(operator_namespace: str, sleep_time: float, verbose: bool = False):
     """Operator handling Thoth's workloads."""
     if verbose:
         _LOGGER.setLevel(logging.DEBUG)
 
-    _LOGGER.info("Workload operator is watching namespace %r", operator_namespace)
+    _LOGGER.info("Workload operator is watching namespace %r with sleep time set to %f seconds", operator_namespace, sleep_time)
 
-    config.load_incluster_config()
-    dyn_client = DynamicClient(client.ApiClient(configuration=client.Configuration()))
-    v1_configmap = dyn_client.resources.get(api_version="v1", kind="ConfigMap")
+    openshift = OpenShift()
+    v1_configmap = openshift.ocp_client.resources.get(
+        api_version="v1", kind="ConfigMap"
+    )
 
     for event in v1_configmap.watch(
         namespace=operator_namespace, label_selector="operator=workload"
     ):
         if event["type"] != "ADDED":
-            _LOGGER.debug("Skipping event, not addition event (type: %r)", event["type"])
+            _LOGGER.debug(
+                "Skipping event, not addition event (type: %r)", event["type"]
+            )
             continue
 
         configmap_name = event["object"].metadata.name
         _LOGGER.info("Handling event for %r", configmap_name)
         try:
-            method_name, method_parameters = _get_method_and_parameters(event)
+            method_name, method_parameters, template_method_name, template_method_parameters = _get_method_and_parameters(
+                event
+            )
         except ValueError:
             # Reported in the function call, just continue here.
             continue
 
-        _wait_for_quota()
-
         # Perform actual method call.
         try:
-            method = getattr(_OPENSHIFT, method_name)
+            template = getattr(openshift, template_method_name)(**template_method_parameters)
+
+            while not openshift.can_run_workload(template, operator_namespace):
+                _LOGGER.info("Waiting for resources to become available for %f seconds", sleep_time)
+                time.sleep(sleep_time)
+
+            method = getattr(openshift, method_name)
             method_result = method(**method_parameters)
         except Exception as exc:
             _LOGGER.exception(
-                "Failed to call method %r on Thoth's OpenShift instance in version %r with parameters %r: %s",
-                method_name,
-                THOTH_COMMON_VERSION,
-                method_parameters,
+                "Failed run requested workload for event %r: %s",
+                event["object"],
                 str(exc),
             )
             continue
