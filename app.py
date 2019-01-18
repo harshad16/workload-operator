@@ -140,8 +140,8 @@ def cli(operator_namespace: str, sleep_time: float, verbose: bool = False):
         try:
             template = getattr(openshift, template_method_name)(**template_method_parameters)
 
+            _LOGGER.info("Waiting for resources to become available")
             while not openshift.can_run_workload(template, operator_namespace):
-                _LOGGER.info("Waiting for resources to become available for %f seconds", sleep_time)
                 time.sleep(sleep_time)
 
             method = getattr(openshift, method_name)
@@ -150,7 +150,7 @@ def cli(operator_namespace: str, sleep_time: float, verbose: bool = False):
             _LOGGER.exception("Failed run requested workload for event %r: %s", event["object"], str(exc))
             continue
 
-        _LOGGER.info("Successfully scheduled job %r", method_result)
+        _LOGGER.info("Successfully scheduled workload %r with name %r", method_result, template["metadata"]["name"])
         _LOGGER.debug(
             "Result of the method call for %r with parameters %r is %r", method_name, method_parameters, method_result
         )
