@@ -27,7 +27,6 @@ import click
 
 from thoth.common import init_logging
 from thoth.common import OpenShift
-from thoth.common import __version__ as THOTH_COMMON_VERSION
 
 init_logging()
 
@@ -169,7 +168,7 @@ def cli(operator_namespace: str, sleep_time: float, verbose: bool = False):
                 time.sleep(sleep_time)
 
             method = getattr(openshift, method_name)
-            method_result = method(**method_parameters)
+            method_result = method(**method_parameters, template=template)
         except Exception as exc:
             _LOGGER.exception(
                 "Failed run requested workload for event %r: %s",
