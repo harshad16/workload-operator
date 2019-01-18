@@ -17,6 +17,13 @@ metadata:
     app: thoth
     component: workload-operator
 
+parameters:
+  - description: Tag of the ImageStream to use
+    displayName: ImageStream Tag
+    required: true
+    name: IMAGE_STREAM_TAG
+    value: 'latest'
+
 objects:
   - kind: ImageStream
     apiVersion: image.openshift.io/v1
@@ -29,10 +36,3 @@ objects:
       name: ${IMAGE_STREAM_TAG}
       lookupPolicy:
         local: true
-
-parameters:
-  - description: Tag of the ImageStream to use
-    displayName: ImageStream Tag
-    required: true
-    name: IMAGE_STREAM_TAG
-    value: 'latest'
