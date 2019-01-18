@@ -35,28 +35,18 @@ _LOGGER = logging.getLogger("thoth.workload_operator")
 
 def _get_method_and_parameters(event) -> typing.Tuple[str, dict, str, dict]:
     """Get method and parameters from event."""
-    _LOGGER.debug(
-        "Obtaining method and parameters that should be used for handling workload"
-    )
+    _LOGGER.debug("Obtaining method and parameters that should be used for handling workload")
 
     configmap_name = event["object"].metadata.name
     method_name = event["object"].data.run_method_name
 
     if not method_name:
-        _LOGGER.error(
-            "No method to be called provided workload ConfigMap %r: %r",
-            configmap_name,
-            event["object"].data,
-        )
+        _LOGGER.error("No method to be called provided workload ConfigMap %r: %r", configmap_name, event["object"].data)
         raise ValueError
 
     parameters = event["object"].data.run_method_parameters
     if not parameters:
-        _LOGGER.error(
-            "No parameters supplied in workload ConfigMap %r: %r",
-            configmap_name,
-            event["object"].data,
-        )
+        _LOGGER.error("No parameters supplied in workload ConfigMap %r: %r", configmap_name, event["object"].data)
         raise ValueError
 
     try:
@@ -74,18 +64,14 @@ def _get_method_and_parameters(event) -> typing.Tuple[str, dict, str, dict]:
     template_method_name = event["object"].data.template_method_name
     if not template_method_name:
         _LOGGER.error(
-            "No template method name supplied in workload ConfigMap %r: %r",
-            configmap_name,
-            event["object"].data,
+            "No template method name supplied in workload ConfigMap %r: %r", configmap_name, event["object"].data
         )
         raise ValueError
 
     template_method_parameters = event["object"].data.template_method_parameters
     if not template_method_parameters:
         _LOGGER.error(
-            "No template method parameters supplied in workload ConfigMap %r: %r",
-            configmap_name,
-            event["object"].data,
+            "No template method parameters supplied in workload ConfigMap %r: %r", configmap_name, event["object"].data
         )
         raise ValueError
 
@@ -106,11 +92,7 @@ def _get_method_and_parameters(event) -> typing.Tuple[str, dict, str, dict]:
 
 @click.command()
 @click.option(
-    "--verbose",
-    "-v",
-    is_flag=True,
-    envvar="THOTH_OPERATOR_VERBOSE",
-    help="Be verbose about what is going on.",
+    "--verbose", "-v", is_flag=True, envvar="THOTH_OPERATOR_VERBOSE", help="Be verbose about what is going on."
 )
 @click.option(
     "--sleep-time",
@@ -133,28 +115,23 @@ def cli(operator_namespace: str, sleep_time: float, verbose: bool = False):
     if verbose:
         _LOGGER.setLevel(logging.DEBUG)
 
-    _LOGGER.info("Workload operator is watching namespace %r with sleep time set to %f seconds", operator_namespace, sleep_time)
-
-    openshift = OpenShift()
-    v1_configmap = openshift.ocp_client.resources.get(
-        api_version="v1", kind="ConfigMap"
+    _LOGGER.info(
+        "Workload operator is watching namespace %r with sleep time set to %f seconds", operator_namespace, sleep_time
     )
 
-    for event in v1_configmap.watch(
-        namespace=operator_namespace, label_selector="operator=workload"
-    ):
+    openshift = OpenShift()
+    v1_configmap = openshift.ocp_client.resources.get(api_version="v1", kind="ConfigMap")
+
+    for event in v1_configmap.watch(namespace=operator_namespace, label_selector="operator=workload"):
         if event["type"] != "ADDED":
-            _LOGGER.debug(
-                "Skipping event, not addition event (type: %r)", event["type"]
-            )
+            _LOGGER.debug("Skipping event, not addition event (type: %r)", event["type"])
             continue
 
         configmap_name = event["object"].metadata.name
         _LOGGER.info("Handling event for %r", configmap_name)
         try:
-            method_name, method_parameters, template_method_name, template_method_parameters = _get_method_and_parameters(
-                event
-            )
+            method_name, method_parameters,
+            template_method_name, template_method_parameters = _get_method_and_parameters(event)
         except ValueError:
             # Reported in the function call, just continue here.
             continue
@@ -170,19 +147,12 @@ def cli(operator_namespace: str, sleep_time: float, verbose: bool = False):
             method = getattr(openshift, method_name)
             method_result = method(**method_parameters, template=template)
         except Exception as exc:
-            _LOGGER.exception(
-                "Failed run requested workload for event %r: %s",
-                event["object"],
-                str(exc),
-            )
+            _LOGGER.exception("Failed run requested workload for event %r: %s", event["object"], str(exc))
             continue
 
         _LOGGER.info("Successfully scheduled job %r", method_result)
         _LOGGER.debug(
-            "Result of the method call for %r with parameters %r is %r",
-            method_name,
-            method_parameters,
-            method_result,
+            "Result of the method call for %r with parameters %r is %r", method_name, method_parameters, method_result
         )
         _LOGGER.debug(
             "Deleting ConfigMap %r from namespace %r, workload successfully scheduled",
