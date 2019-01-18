@@ -130,8 +130,8 @@ def cli(operator_namespace: str, sleep_time: float, verbose: bool = False):
         configmap_name = event["object"].metadata.name
         _LOGGER.info("Handling event for %r", configmap_name)
         try:
-            method_name, method_parameters,
-            template_method_name, template_method_parameters = _get_method_and_parameters(event)
+            method_name, method_parameters, \
+                template_method_name, template_method_parameters = _get_method_and_parameters(event)
         except ValueError:
             # Reported in the function call, just continue here.
             continue
