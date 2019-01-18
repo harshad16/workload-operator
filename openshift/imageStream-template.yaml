@@ -4,7 +4,8 @@ metadata:
   name: workload-operator-imagestream
   annotations:
     description: >
-      This is Workload Operator ImageStream, this template is meant to be used by Bots, but could also be used by humans...
+      This is Workload Operator ImageStream,
+      this template is meant to be used by Bots, but could also be used by humans...
     openshift.io/display-name: 'Thoth Core: Operator'
     version: 0.0.1
     tags: poc,thoth,workload-operator,ai-stacks,aistacks
@@ -16,6 +17,13 @@ metadata:
     template: workload-operator-imagestream
     app: thoth
     component: workload-operator
+
+parameters:
+  - description: Tag of the ImageStream to use
+    displayName: ImageStream Tag
+    required: true
+    name: IMAGE_STREAM_TAG
+    value: 'latest'
 
 objects:
   - kind: ImageStream
@@ -29,10 +37,3 @@ objects:
       name: ${IMAGE_STREAM_TAG}
       lookupPolicy:
         local: true
-
-parameters:
-  - description: Tag of the ImageStream to use
-    displayName: ImageStream Tag
-    required: true
-    name: IMAGE_STREAM_TAG
-    value: 'latest'

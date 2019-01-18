@@ -19,6 +19,26 @@ metadata:
     app: thoth
     component: workload-operator
 
+parameters:
+  - description: Name of the github repository for Thoth's Workload Operator
+    displayName: Git Repository
+    required: true
+    name: GITHUB_URL
+    value: 'https://github.com/thoth-station/workload-operator'
+
+  - description: Git reference to be used for Thoth's Workload Operator
+    displayName: Git Reference
+    required: true
+    name: GITHUB_REF
+    value: 'master'
+
+  - description: >
+      Tag of the output ImageStream the resulting container image should go to
+    displayName: ImageStream Tag
+    required: true
+    name: IMAGE_STREAM_TAG
+    value: 'latest'
+
 objects:
   - apiVersion: build.openshift.io/v1
     kind: BuildConfig
@@ -60,23 +80,3 @@ objects:
       triggers:
         - type: ImageChange
           imageChange: {}
-
-parameters:
-  - description: Name of the github repository for Thoth's Workload Operator
-    displayName: Git Repository
-    required: true
-    name: GITHUB_URL
-    value: 'https://github.com/thoth-station/workload-operator'
-
-  - description: Git reference to be used for Thoth's Workload Operator
-    displayName: Git Reference
-    required: true
-    name: GITHUB_REF
-    value: 'master'
-
-  - description: >
-      Tag of the output ImageStream the resulting container image should go to
-    displayName: ImageStream Tag
-    required: true
-    name: IMAGE_STREAM_TAG
-    value: 'latest'
