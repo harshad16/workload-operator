@@ -17,13 +17,6 @@ metadata:
     app: thoth
     component: workload-operator
 
-parameters:
-  - description: Tag of the ImageStream to use
-    displayName: ImageStream Tag
-    required: true
-    name: IMAGE_STREAM_TAG
-    value: 'latest'
-
 objects:
   - kind: DeploymentConfig
     apiVersion: v1
@@ -31,7 +24,7 @@ objects:
       labels:
         app: thoth
         component: workload-operator
-      name: workload-operator
+      name: workload-operator-${THOTH_OPERATOR_NAMESPACE}
     spec:
       replicas: 1
       selector:
@@ -42,7 +35,7 @@ objects:
             app: thoth
             name: workload-operator
         spec:
-          serviceAccountName: analyzer
+          serviceAccountName: ${THOTH_SERVICE_ACCOUNT_NAME}
           containers:
             - name: workload-operator
               env:
@@ -65,9 +58,8 @@ objects:
                     configMapKeyRef:
                       key: backend-namespace
                       name: thoth
-                # TODO: make namespace parameter
                 - name: THOTH_OPERATOR_NAMESPACE
-                  value: thoth-test-core
+                  value: ${THOTH_OPERATOR_NAMESPACE}
                 - name: THOTH_LOG_WORKLOAD_OPERATOR
                   value: INFO
                 - name: THOTH_INFRA_NAMESPACE
@@ -118,3 +110,20 @@ objects:
             from:
               kind: ImageStreamTag
               name: 'workload-operator:${IMAGE_STREAM_TAG}'
+
+parameters:
+  - description: Tag of the ImageStream to use
+    displayName: ImageStream Tag
+    required: true
+    name: IMAGE_STREAM_TAG
+    value: 'latest'
+
+  - description: Namespace in which operator is serving events.
+    displayName: Operator namespace
+    required: true
+    name: THOTH_OPERATOR_NAMESPACE
+
+  - description: Service account allowing to schedule workload to.
+    displayName: Service account name.
+    required: true
+    name: THOTH_SERVICE_ACCOUNT_NAME
