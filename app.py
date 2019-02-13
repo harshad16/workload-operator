@@ -38,6 +38,7 @@ _OPENSHIFT = OpenShift()
 
 def event_producer(queue: Queue, operator_namespace: str):
     """Queue events to be processed coming from the cluster."""
+    _LOGGER.info("Starting event producer")
     v1_configmap = _OPENSHIFT.ocp_client.resources.get(api_version="v1", kind="ConfigMap")
     for event in v1_configmap.watch(namespace=operator_namespace, label_selector="operator=workload"):
         if event["type"] != "ADDED":
@@ -53,16 +54,24 @@ def _get_method_and_parameters(configmap) -> typing.Tuple[str, dict, str, dict]:
     """Get method and parameters from event."""
     _LOGGER.debug("Obtaining method and parameters that should be used for handling workload")
 
-    configmap_name = configmap["object"].metadata.name
-    method_name = configmap["object"].data.run_method_name
+    configmap_name = configmap.metadata.name
+    method_name = configmap.data.run_method_name
 
     if not method_name:
-        _LOGGER.error("No method to be called provided workload ConfigMap %r: %r", configmap_name, configmap["object"].data)
+        _LOGGER.error(
+            "No method to be called provided workload ConfigMap %r: %r",
+            configmap_name,
+            configmap.data
+        )
         raise ValueError
 
-    parameters = configmap["object"].data.run_method_parameters
+    parameters = configmap.data.run_method_parameters
     if not parameters:
-        _LOGGER.error("No parameters supplied in workload ConfigMap %r: %r", configmap_name, configmap["object"].data)
+        _LOGGER.error(
+            "No parameters supplied in workload ConfigMap %r: %r",
+            configmap_name,
+            configmap.data
+        )
         raise ValueError
 
     try:
@@ -72,22 +81,22 @@ def _get_method_and_parameters(configmap) -> typing.Tuple[str, dict, str, dict]:
             "Failed to parse parameters for method call %r in workload ConfigMap %r: %s",
             method_name,
             configmap_name,
-            configmap["object"].data,
+            configmap.data,
             str(exc),
         )
         raise ValueError
 
-    template_method_name = configmap["object"].data.template_method_name
+    template_method_name = configmap.data.template_method_name
     if not template_method_name:
         _LOGGER.error(
-            "No template method name supplied in workload ConfigMap %r: %r", configmap_name, configmap["object"].data
+            "No template method name supplied in workload ConfigMap %r: %r", configmap_name, configmap.data
         )
         raise ValueError
 
-    template_method_parameters = configmap["object"].data.template_method_parameters
+    template_method_parameters = configmap.data.template_method_parameters
     if not template_method_parameters:
         _LOGGER.error(
-            "No template method parameters supplied in workload ConfigMap %r: %r", configmap_name, configmap["object"].data
+            "No template method parameters supplied in workload ConfigMap %r: %r", configmap_name, configmap.data
         )
         raise ValueError
 
@@ -98,7 +107,7 @@ def _get_method_and_parameters(configmap) -> typing.Tuple[str, dict, str, dict]:
             "Failed to parse template parameters for method call %r in workload ConfigMap %r: %s",
             template_method_name,
             configmap_name,
-            configmap["object"].data,
+            configmap.data,
             str(exc),
         )
         raise ValueError
@@ -169,7 +178,7 @@ def cli(operator_namespace: str, sleep_time: float, verbose: bool = False):
             method = getattr(_OPENSHIFT, method_name)
             method_result = method(**method_parameters, template=template)
         except Exception as exc:
-            _LOGGER.exception("Failed run requested workload for event %r: %s", configmap["object"], str(exc))
+            _LOGGER.exception("Failed run requested workload for event %r: %s", configmap, str(exc))
             continue
 
         _LOGGER.info("Successfully scheduled workload %r with name %r", method_result, template["metadata"]["name"])
