@@ -33,13 +33,13 @@ from thoth.common import OpenShift
 init_logging()
 
 _LOGGER = logging.getLogger("thoth.workload_operator")
-_OPENSHIFT = OpenShift()
 
 
 def event_producer(queue: Queue, operator_namespace: str):
     """Queue events to be processed coming from the cluster."""
     _LOGGER.info("Starting event producer")
-    v1_configmap = _OPENSHIFT.ocp_client.resources.get(api_version="v1", kind="ConfigMap")
+    openshift = OpenShift()
+    v1_configmap = openshift.ocp_client.resources.get(api_version="v1", kind="ConfigMap")
     for event in v1_configmap.watch(namespace=operator_namespace, label_selector="operator=workload"):
         if event["type"] != "ADDED":
             _LOGGER.debug("Skipping event, not addition event (type: %r)", event["type"])
@@ -146,7 +146,9 @@ def cli(operator_namespace: str, sleep_time: float, verbose: bool = False):
 
     queue = Queue()
     producer = Process(target=event_producer, args=(queue, operator_namespace))
-    v1_configmap = _OPENSHIFT.ocp_client.resources.get(api_version="v1", kind="ConfigMap")
+
+    openshift = OpenShift()
+    v1_configmap = openshift.ocp_client.resources.get(api_version="v1", kind="ConfigMap")
 
     producer.start()
     while producer.is_alive():
@@ -169,13 +171,13 @@ def cli(operator_namespace: str, sleep_time: float, verbose: bool = False):
 
         # Perform actual method call.
         try:
-            template = getattr(_OPENSHIFT, template_method_name)(**template_method_parameters)
+            template = getattr(openshift, template_method_name)(**template_method_parameters)
 
             _LOGGER.info("Waiting for resources to become available")
-            while not _OPENSHIFT.can_run_workload(template, operator_namespace):
+            while not openshift.can_run_workload(template, operator_namespace):
                 time.sleep(sleep_time)
 
-            method = getattr(_OPENSHIFT, method_name)
+            method = getattr(openshift, method_name)
             method_result = method(**method_parameters, template=template)
         except Exception as exc:
             _LOGGER.exception("Failed run requested workload for event %r: %s", configmap, str(exc))
@@ -202,6 +204,9 @@ def cli(operator_namespace: str, sleep_time: float, verbose: bool = False):
             continue
 
     producer.join()
+
+    # Always fail, this should be run forever.
+    sys.exit(1)
 
 
 if __name__ == "__main__":
