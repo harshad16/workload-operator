@@ -9,10 +9,6 @@ verify_ssl = true
 thoth-common = {extras = ["openshift"],version = "*"}
 click = "*"
 pyyaml = "*"
-# TODO: the release of OpenShift available on PyPI has a bug with CM watch not
-# being correctly propagated. The current master branch seems to have this
-# issue fixed.
-openshift = {git = "https://github.com/openshift/openshift-restclient-python"}
 
 [requires]
 python_version = "3.6"
