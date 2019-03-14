@@ -5,7 +5,7 @@ metadata:
   annotations:
     description: "This is Thoth - Workload Operator"
     openshift.io/display-name: "Thoth Core: Workload Operator"
-    version: 0.1.1
+    version: 0.1.2
     tags: thoth,workload-operator,ai-stacks,aistacks
     template.openshift.io/documentation-url: https://github.com/Thoth-Station/
     template.openshift.io/long-description: >
@@ -21,7 +21,7 @@ parameters:
   - description: Project the ImageStream to be use lives in
     displayName: ImageStream Project
     required: true
-    name: IMAGE_STREAM_PROJECT_NAME
+    name: IMAGE_STREAM_NAMESPACE
 
   - description: Tag of the ImageStream to be use
     displayName: ImageStream Tag
@@ -32,7 +32,7 @@ parameters:
   - description: Project Name in which the operator is watching events.
     displayName: Operator Project Name
     required: true
-    name: THOTH_OPERATOR_PROJECT_NAME
+    name: THOTH_OPERATOR_NAMESPACE
 
   - description: Service account allowing the Operator to schedule workload.
     displayName: Service account name.
@@ -46,7 +46,7 @@ objects:
       labels:
         app: thoth
         component: workload-operator
-      name: workload-operator-${THOTH_OPERATOR_PROJECT_NAME}
+      name: workload-operator-${THOTH_OPERATOR_NAMESPACE}
     spec:
       replicas: 1
       selector:
@@ -57,7 +57,7 @@ objects:
             app: thoth
             name: workload-operator
         spec:
-          serviceAccountName: workload-operator-${THOTH_OPERATOR_PROJECT_NAME}
+          serviceAccountName: workload-operator-${THOTH_OPERATOR_NAMESPACE}
           containers:
             - name: workload-operator
               env:
@@ -81,7 +81,7 @@ objects:
                       key: backend-namespace
                       name: thoth
                 - name: THOTH_OPERATOR_NAMESPACE
-                  value: ${THOTH_OPERATOR_PROJECT_NAME}
+                  value: "${THOTH_OPERATOR_NAMESPACE}"
                 - name: THOTH_LOG_WORKLOAD_OPERATOR
                   value: INFO
                 - name: THOTH_INFRA_NAMESPACE
@@ -131,5 +131,5 @@ objects:
               - workload-operator
             from:
               kind: ImageStreamTag
-              namespace: "${IMAGE_STREAM_PROJECT_NAME}"
+              namespace: "${IMAGE_STREAM_NAMESPACE}"
               name: "workload-operator:${IMAGE_STREAM_TAG}"
