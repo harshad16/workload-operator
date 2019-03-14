@@ -5,7 +5,7 @@ metadata:
   annotations:
     description: "This is Thoth - Workload Operator"
     openshift.io/display-name: "Thoth Core: Workload Operator"
-    version: 0.1.0
+    version: 0.1.1
     tags: thoth,workload-operator,ai-stacks,aistacks
     template.openshift.io/documentation-url: https://github.com/Thoth-Station/
     template.openshift.io/long-description: >
@@ -80,7 +80,7 @@ objects:
                     configMapKeyRef:
                       key: backend-namespace
                       name: thoth
-                - name: THOTH_OPERATOR_PROJECT_NAME
+                - name: THOTH_OPERATOR_NAMESPACE
                   value: ${THOTH_OPERATOR_PROJECT_NAME}
                 - name: THOTH_LOG_WORKLOAD_OPERATOR
                   value: INFO
