@@ -18,6 +18,7 @@
 """Operator handling Thoth's workload."""
 
 import sys
+import os
 import logging
 import json
 import typing
@@ -29,6 +30,7 @@ import click
 
 from thoth.common import init_logging
 from thoth.common import OpenShift
+from thoth.common import __version__ as thoth_common_version
 
 init_logging()
 
@@ -140,6 +142,11 @@ def cli(operator_namespace: str, sleep_time: float, verbose: bool = False):
     if verbose:
         _LOGGER.setLevel(logging.DEBUG)
 
+    _LOGGER.info(
+        "Graph sync scheduler is running thoth-common in version %r, built from %r",
+        thoth_common_version,
+        os.getenv("OPENSHIFT_BUILD_COMMIT")
+    )
     _LOGGER.info(
         "Workload operator is watching namespace %r with sleep time set to %f seconds", operator_namespace, sleep_time
     )
