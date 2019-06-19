@@ -26,9 +26,11 @@ from multiprocessing import Queue
 from multiprocessing import Process
 
 import click
+from openshift.dynamic.exceptions import ConflictError
 
 from thoth.common import init_logging
 from thoth.common import OpenShift
+
 
 init_logging()
 
@@ -179,6 +181,9 @@ def cli(operator_namespace: str, sleep_time: float, verbose: bool = False):
 
             method = getattr(openshift, method_name)
             method_result = method(**method_parameters, template=template)
+        except ConflictError as exc:
+            _LOGGER.warning("Workload for event %r was already handled: %s", configmap, str(exc))
+            continue
         except Exception as exc:
             _LOGGER.exception("Failed run requested workload for event %r: %s", configmap, str(exc))
             continue
