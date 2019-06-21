@@ -199,16 +199,16 @@ def cli(operator_namespace: str, sleep_time: float, verbose: bool = False):
             configmap_name,
             operator_namespace,
         )
-        try:
-            v1_configmap.delete(name=configmap_name, namespace=operator_namespace)
-        except Exception as exc:
-            _LOGGER.exception(
-                "Failed to delete workload ConfigMap %r from namespace %r: %s",
-                configmap_name,
-                operator_namespace,
-                str(exc),
-            )
-            continue
+        # try:
+        #     v1_configmap.delete(name=configmap_name, namespace=operator_namespace)
+        # except Exception as exc:
+        #     _LOGGER.exception(
+        #         "Failed to delete workload ConfigMap %r from namespace %r: %s",
+        #         configmap_name,
+        #         operator_namespace,
+        #         str(exc),
+        #     )
+        #     continue
 
     producer.join()
 
