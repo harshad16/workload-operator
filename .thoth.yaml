@@ -9,3 +9,12 @@ runtime_environments:
       version: "7"
     python_version: "3.6"
     recommendation_type: latest
+
+
+managers:
+  - name: thoth-advise
+    configuration:
+      labels: [bot, kebechet]
+  - name: thoth-provenance
+    configuration:
+      labels: [bot, kebechet]
