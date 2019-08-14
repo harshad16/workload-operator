@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "374802a9e83befaa20f2a0a2f99093c9159b74f2471e2d0ca1838876e9050c80"
+            "sha256": "939b318d3ed560ba9a7171c3f057f82d37a0f74ae47d90f863ed4126e14ee6cb"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -157,10 +157,10 @@
         },
         "kubernetes": {
             "hashes": [
-                "sha256:0cc9ce02d838da660efa0a67270b4b7d47e6beb8889673cd45c86f897e2d6821",
-                "sha256:54f8e7bb1dd9a55cf416dff76a63c4ae441764280942d9913f2243676f29d02c"
+                "sha256:cbf217c5988516f79dec14f82a228f9897817717b7a53c538f84adf5217b9ca7",
+                "sha256:ef2b6d53708cf7f8864e6775fb45e3f76a92607785c422034d7e1d1063399597"
             ],
-            "version": "==8.0.0"
+            "version": "==8.0.2"
         },
         "markupsafe": {
             "hashes": [
@@ -304,10 +304,10 @@
         },
         "ruamel.yaml": {
             "hashes": [
-                "sha256:4c1dbad22790b5ea8587c2a0cae97ebc7a9d0d88de5d0edb70dea2eab7d8534a",
-                "sha256:eb4b1ffd095785c50f110118cb6f7bb9cd011ecc013b014436d38b7f8fb7afa9"
+                "sha256:547aeab5c51c93bc750ed2a320c1559b605bde3aa569216aa75fd91d8a1c4623",
+                "sha256:c5e239b6a4f26baabb2e22b145582a7d99ae9d4ebb8902291365a61ed38faa7f"
             ],
-            "version": "==0.16.0"
+            "version": "==0.16.1"
         },
         "ruamel.yaml.clib": {
             "hashes": [
@@ -349,11 +349,11 @@
         },
         "thoth-common": {
             "hashes": [
-                "sha256:35cd7d3840f582f6960219f24379d239e3f5b67c037329191521b0c27061f826",
-                "sha256:3bc5830164762b008ab0c614d32a721ddc9c422da5eab804e6bc5f24308736af"
+                "sha256:4e2e63d463700c5cdb28e82e0a35c5faa7ec3748eb0a510179c2a3a6f9f0e9be",
+                "sha256:5d5c23aa5aeca3470bb0cf5d292c1ce16204ca2ffd542339a81600eabb9229fd"
             ],
             "index": "pypi",
-            "version": "==0.9.6"
+            "version": "==0.9.8"
         },
         "tzlocal": {
             "hashes": [
